@@ -442,57 +442,72 @@
     margin: 0 0 1.8rem;
   }
 
-  .photo-upload{
-    width: 148px;
-    height: 148px;
-    margin: 0 auto 2rem;
-    border-radius: 22px;
+  .photo-row{
+    display:flex;
+    gap: 0.7rem;
+    margin: 0 0 1.5rem;
+  }
+  .photo-slot{
+    flex:1;
+    aspect-ratio: 1/1;
+    min-width:0;
+    border-radius: 16px;
     border: 2px dashed rgba(51,41,31,0.28);
     background: rgba(255,255,255,0.5);
     display:flex;
     flex-direction:column;
     align-items:center;
     justify-content:center;
-    gap: 0.4rem;
+    gap: 0.25rem;
     cursor:pointer;
     overflow:hidden;
     position:relative;
     transition: border-color .2s ease, background .2s ease;
   }
-  .photo-upload:hover{
+  .photo-slot:hover{
     border-color: var(--terracotta);
   }
-  .photo-upload.has-image{
+  .photo-slot.has-image{
     border-style: solid;
     border-color: rgba(51,41,31,0.12);
   }
-  .photo-upload img{
+  .photo-slot img{
     width:100%; height:100%;
     object-fit:cover;
   }
-  .photo-upload .photo-icon{
-    font-size: 1.8rem;
+  .photo-slot .photo-icon{
+    font-size: 1.3rem;
     opacity:0.55;
   }
-  .photo-upload .photo-label{
+  .photo-slot .photo-label{
     font-family:'Jost', sans-serif;
-    font-size: 0.72rem;
-    letter-spacing:0.08em;
+    font-size: 0.62rem;
+    letter-spacing:0.06em;
     text-transform:uppercase;
     color: rgba(51,41,31,0.5);
     text-align:center;
-    padding: 0 0.6rem;
   }
-  .photo-upload .photo-edit{
+  .photo-slot .photo-edit{
     position:absolute;
-    bottom: 0.5rem; right: 0.5rem;
+    bottom: 0.3rem; right: 0.3rem;
     background: rgba(51,41,31,0.65);
     color:#fff;
-    font-size: 0.65rem;
-    letter-spacing:0.05em;
+    font-size: 0.58rem;
+    letter-spacing:0.03em;
     text-transform:uppercase;
-    padding: 0.3rem 0.55rem;
+    padding: 0.22rem 0.45rem;
     border-radius: 999px;
+  }
+  .photo-slot .photo-remove{
+    position:absolute;
+    top: 0.3rem; right: 0.3rem;
+    width: 20px; height: 20px;
+    background: rgba(51,41,31,0.7);
+    color:#fff;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size: 0.75rem;
+    line-height:1;
   }
 
   .field-row{
@@ -591,6 +606,7 @@
     <div class="home-actions">
       <button class="btn-coffee" id="btnIngresarPrenda">Ingresar prenda</button>
       <button class="btn-coffee" id="btnRegistrarVenta">Registrar una venta</button>
+      <button class="btn-coffee" id="btnGaleria">Galería</button>
     </div>
   </div>
 
@@ -598,11 +614,25 @@
     <div class="form-wrap">
       <button class="form-back" id="btnVolverHome">← Volver</button>
       <p class="form-title">Ingresar prenda</p>
+      <span class="date-display" id="fechaHoyPrenda" style="display:block; margin-top:-1.4rem; margin-bottom:1.6rem;"></span>
 
       <form id="formPrenda">
-        <div class="photo-upload" id="photoUpload">
-          <span class="photo-icon">📷</span>
-          <span class="photo-label">Agregar foto</span>
+        <div class="field">
+          <label>Fotos (hasta 3)</label>
+          <div class="photo-row">
+            <div class="photo-slot" data-index="0">
+              <span class="photo-icon">📷</span>
+              <span class="photo-label">Foto 1</span>
+            </div>
+            <div class="photo-slot" data-index="1">
+              <span class="photo-icon">📷</span>
+              <span class="photo-label">Foto 2</span>
+            </div>
+            <div class="photo-slot" data-index="2">
+              <span class="photo-icon">📷</span>
+              <span class="photo-label">Foto 3</span>
+            </div>
+          </div>
           <input type="file" id="inputFoto" accept="image/*" capture="environment" style="display:none">
         </div>
 
@@ -618,8 +648,15 @@
             <option value="Vestidos">Vestidos</option>
             <option value="Blusas y tops">Blusas y tops</option>
             <option value="Pantalones">Pantalones</option>
+            <option value="Jeans">Jeans</option>
             <option value="Faldas">Faldas</option>
+            <option value="Enteritos">Enteritos</option>
+            <option value="Sweter">Sweter</option>
+            <option value="Polerones">Polerones</option>
             <option value="Ponchos y chaquetas">Ponchos y chaquetas</option>
+            <option value="Tapados">Tapados</option>
+            <option value="Chalecos">Chalecos</option>
+            <option value="Gorros">Gorros</option>
             <option value="Accesorios">Accesorios</option>
             <option value="Otro">Otro</option>
           </select>
@@ -635,6 +672,8 @@
               <option value="M">M</option>
               <option value="L">L</option>
               <option value="XL">XL</option>
+              <option value="XXL">XXL</option>
+              <option value="XXXL">XXXL</option>
               <option value="Única">Única</option>
             </select>
           </div>
@@ -709,6 +748,9 @@
     document.getElementById('btnRegistrarVenta').addEventListener('click', ()=>{
       showToast('Registrar venta — próximo paso 🌿');
     });
+    document.getElementById('btnGaleria').addEventListener('click', ()=>{
+      showToast('Galería — próximo paso 🖼️');
+    });
 
     document.getElementById('btnVolverHome').addEventListener('click', ()=>{
       mostrarPantalla(homeScreen);
@@ -717,34 +759,61 @@
       mostrarPantalla(homeScreen);
     });
 
-    // --- Foto de la prenda ---
-    const photoUpload = document.getElementById('photoUpload');
+    // --- Fotos de la prenda (hasta 3) ---
     const inputFoto = document.getElementById('inputFoto');
+    const photoSlots = document.querySelectorAll('.photo-slot');
+    const fotosPrenda = [null, null, null];
+    let slotActivo = null;
 
-    photoUpload.addEventListener('click', ()=> inputFoto.click());
+    function renderSlot(slot, index){
+      if(fotosPrenda[index]){
+        slot.classList.add('has-image');
+        slot.innerHTML = `
+          <img src="${fotosPrenda[index]}" alt="Foto ${index + 1} de la prenda">
+          <span class="photo-remove" data-remove="${index}">✕</span>
+        `;
+      } else {
+        slot.classList.remove('has-image');
+        slot.innerHTML = `
+          <span class="photo-icon">📷</span>
+          <span class="photo-label">Foto ${index + 1}</span>
+        `;
+      }
+    }
+
+    photoSlots.forEach((slot)=>{
+      slot.addEventListener('click', (e)=>{
+        const index = Number(slot.dataset.index);
+        // si se tocó la "x" de eliminar, no abrir el selector de archivos
+        if(e.target.closest('.photo-remove')){
+          fotosPrenda[index] = null;
+          renderSlot(slot, index);
+          return;
+        }
+        slotActivo = index;
+        inputFoto.click();
+      });
+    });
 
     inputFoto.addEventListener('change', ()=>{
       const archivo = inputFoto.files && inputFoto.files[0];
-      if(!archivo) return;
+      if(!archivo || slotActivo === null) return;
+      const index = slotActivo;
       const lector = new FileReader();
       lector.onload = (e)=>{
-        photoUpload.innerHTML = `
-          <img src="${e.target.result}" alt="Foto de la prenda">
-          <span class="photo-edit">Cambiar</span>
-        `;
-        photoUpload.classList.add('has-image');
+        fotosPrenda[index] = e.target.result;
+        renderSlot(photoSlots[index], index);
       };
       lector.readAsDataURL(archivo);
+      inputFoto.value = '';
     });
 
     function resetFormPrenda(){
       document.getElementById('formPrenda').reset();
-      inputFoto.value = '';
-      photoUpload.classList.remove('has-image');
-      photoUpload.innerHTML = `
-        <span class="photo-icon">📷</span>
-        <span class="photo-label">Agregar foto</span>
-      `;
+      for(let i=0; i<3; i++){
+        fotosPrenda[i] = null;
+        renderSlot(photoSlots[i], i);
+      }
     }
 
     document.getElementById('formPrenda').addEventListener('submit', (e)=>{
@@ -779,12 +848,13 @@
 
     // --- Fecha actualizada ---
     (function actualizarFecha(){
-      const el = document.getElementById('fechaHoy');
-      if(!el) return;
       const hoy = new Date();
       let txt = hoy.toLocaleDateString('es-CL', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
       txt = txt.charAt(0).toUpperCase() + txt.slice(1);
-      el.textContent = txt;
+      ['fechaHoy', 'fechaHoyPrenda'].forEach((id)=>{
+        const el = document.getElementById(id);
+        if(el) el.textContent = txt;
+      });
     })();
   </script>
 </body>
