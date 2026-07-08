@@ -249,7 +249,7 @@
     color: rgba(51,41,31,0.55);
     margin-bottom: 0.4rem;
   }
-  .field input{
+  .field input, .field select{
     width:100%;
     font-family:'Jost', sans-serif;
     font-size: 1rem;
@@ -260,12 +260,21 @@
     color: var(--ink);
     box-sizing: border-box;
     transition: border-color .2s ease;
+    appearance: none;
+    -webkit-appearance: none;
   }
-  .field input:focus{
+  .field select{
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2333291F' stroke-width='2' stroke-linecap='round'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 0.85rem center;
+    background-size: 16px;
+    padding-right: 2.4rem;
+  }
+  .field input:focus, .field select:focus{
     outline:none;
     border-color: var(--terracotta);
   }
-  .field input:focus-visible{
+  .field input:focus-visible, .field select:focus-visible{
     outline: 2px solid var(--gold);
     outline-offset: 2px;
   }
@@ -388,6 +397,141 @@
     .home-screen{ transition:none !important; }
   }
 
+  /* pantalla: ingresar prenda */
+  .form-screen{
+    position:fixed; inset:0;
+    background: radial-gradient(120% 90% at 50% 0%, var(--cream) 0%, var(--cream-deep) 100%);
+    opacity:0;
+    pointer-events:none;
+    transition: opacity .3s ease;
+    overflow-y: auto;
+    z-index: 25;
+  }
+  .form-screen.show{
+    opacity:1;
+    pointer-events:auto;
+  }
+
+  .form-wrap{
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 7vh 7vw 5vh;
+  }
+
+  .form-back{
+    background:none;
+    border:none;
+    cursor:pointer;
+    font-family:'Jost', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing:0.04em;
+    color: rgba(51,41,31,0.55);
+    display:flex;
+    align-items:center;
+    gap: 0.4rem;
+    margin-bottom: 1.6rem;
+    padding: 0.3rem 0;
+  }
+  .form-back:hover{ color: var(--ink); }
+
+  .form-title{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 1.5rem;
+    color: var(--ink);
+    margin: 0 0 1.8rem;
+  }
+
+  .photo-upload{
+    width: 148px;
+    height: 148px;
+    margin: 0 auto 2rem;
+    border-radius: 22px;
+    border: 2px dashed rgba(51,41,31,0.28);
+    background: rgba(255,255,255,0.5);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap: 0.4rem;
+    cursor:pointer;
+    overflow:hidden;
+    position:relative;
+    transition: border-color .2s ease, background .2s ease;
+  }
+  .photo-upload:hover{
+    border-color: var(--terracotta);
+  }
+  .photo-upload.has-image{
+    border-style: solid;
+    border-color: rgba(51,41,31,0.12);
+  }
+  .photo-upload img{
+    width:100%; height:100%;
+    object-fit:cover;
+  }
+  .photo-upload .photo-icon{
+    font-size: 1.8rem;
+    opacity:0.55;
+  }
+  .photo-upload .photo-label{
+    font-family:'Jost', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color: rgba(51,41,31,0.5);
+    text-align:center;
+    padding: 0 0.6rem;
+  }
+  .photo-upload .photo-edit{
+    position:absolute;
+    bottom: 0.5rem; right: 0.5rem;
+    background: rgba(51,41,31,0.65);
+    color:#fff;
+    font-size: 0.65rem;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    padding: 0.3rem 0.55rem;
+    border-radius: 999px;
+  }
+
+  .field-row{
+    display:flex;
+    gap: 0.8rem;
+  }
+  .field-row .field{
+    flex:1;
+    min-width:0;
+  }
+
+  .form-actions{
+    display:flex;
+    gap: 0.7rem;
+    margin-top: 0.6rem;
+  }
+  .form-actions button{
+    flex:1;
+    border:none;
+    border-radius: 999px;
+    padding: 0.9rem 1rem;
+    font-family:'Jost', sans-serif;
+    font-weight:500;
+    font-size: 0.92rem;
+    letter-spacing:0.03em;
+    cursor:pointer;
+    transition: transform .2s ease, filter .2s ease;
+  }
+  .form-actions button:hover{ transform: translateY(-1px); }
+  .form-btn-cancel{
+    background: transparent;
+    color: rgba(51,41,31,0.55);
+    border: 1.5px solid rgba(51,41,31,0.18) !important;
+  }
+  .form-btn-save{
+    background: linear-gradient(135deg, var(--terracotta), #C77B4C);
+    color: var(--cream);
+  }
+
 </style>
 </head>
 <body>
@@ -450,6 +594,64 @@
     </div>
   </div>
 
+  <div class="form-screen" id="formPrendaScreen">
+    <div class="form-wrap">
+      <button class="form-back" id="btnVolverHome">← Volver</button>
+      <p class="form-title">Ingresar prenda</p>
+
+      <form id="formPrenda">
+        <div class="photo-upload" id="photoUpload">
+          <span class="photo-icon">📷</span>
+          <span class="photo-label">Agregar foto</span>
+          <input type="file" id="inputFoto" accept="image/*" capture="environment" style="display:none">
+        </div>
+
+        <div class="field">
+          <label for="inputNombrePrenda">Nombre de la prenda</label>
+          <input type="text" id="inputNombrePrenda" placeholder="Ej: Vestido Luna" required>
+        </div>
+
+        <div class="field">
+          <label for="inputCategoria">Categoría</label>
+          <select id="inputCategoria" required>
+            <option value="" disabled selected>Selecciona una categoría</option>
+            <option value="Vestidos">Vestidos</option>
+            <option value="Blusas y tops">Blusas y tops</option>
+            <option value="Pantalones">Pantalones</option>
+            <option value="Faldas">Faldas</option>
+            <option value="Ponchos y chaquetas">Ponchos y chaquetas</option>
+            <option value="Accesorios">Accesorios</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="inputTalla">Talla</label>
+            <select id="inputTalla" required>
+              <option value="" disabled selected>Talla</option>
+              <option value="XS">XS</option>
+              <option value="S">S</option>
+              <option value="M">M</option>
+              <option value="L">L</option>
+              <option value="XL">XL</option>
+              <option value="Única">Única</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="inputPrecio">Precio (CLP)</label>
+            <input type="number" id="inputPrecio" placeholder="Ej: 24990" min="0" step="10" required>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="form-btn-cancel" id="btnCancelarPrenda">Cancelar</button>
+          <button type="submit" class="form-btn-save">Guardar prenda</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
     function showToast(msg){
       const t = document.getElementById('toast');
@@ -493,11 +695,71 @@
       if(e.key === 'Escape' && modal.classList.contains('show')) cerrarModal();
     });
 
+    const formPrendaScreen = document.getElementById('formPrendaScreen');
+
+    function mostrarPantalla(pantalla){
+      homeScreen.classList.remove('show');
+      formPrendaScreen.classList.remove('show');
+      pantalla.classList.add('show');
+    }
+
+    document.getElementById('btnIngresarPrenda').addEventListener('click', ()=>{
+      mostrarPantalla(formPrendaScreen);
+    });
+    document.getElementById('btnRegistrarVenta').addEventListener('click', ()=>{
+      showToast('Registrar venta — próximo paso 🌿');
+    });
+
+    document.getElementById('btnVolverHome').addEventListener('click', ()=>{
+      mostrarPantalla(homeScreen);
+    });
+    document.getElementById('btnCancelarPrenda').addEventListener('click', ()=>{
+      mostrarPantalla(homeScreen);
+    });
+
+    // --- Foto de la prenda ---
+    const photoUpload = document.getElementById('photoUpload');
+    const inputFoto = document.getElementById('inputFoto');
+
+    photoUpload.addEventListener('click', ()=> inputFoto.click());
+
+    inputFoto.addEventListener('change', ()=>{
+      const archivo = inputFoto.files && inputFoto.files[0];
+      if(!archivo) return;
+      const lector = new FileReader();
+      lector.onload = (e)=>{
+        photoUpload.innerHTML = `
+          <img src="${e.target.result}" alt="Foto de la prenda">
+          <span class="photo-edit">Cambiar</span>
+        `;
+        photoUpload.classList.add('has-image');
+      };
+      lector.readAsDataURL(archivo);
+    });
+
+    function resetFormPrenda(){
+      document.getElementById('formPrenda').reset();
+      inputFoto.value = '';
+      photoUpload.classList.remove('has-image');
+      photoUpload.innerHTML = `
+        <span class="photo-icon">📷</span>
+        <span class="photo-label">Agregar foto</span>
+      `;
+    }
+
+    document.getElementById('formPrenda').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      // Por ahora se guarda solo localmente (sin backend aún).
+      showToast('Prenda guardada 🌾 (próximamente en el inventario)');
+      resetFormPrenda();
+      mostrarPantalla(homeScreen);
+    });
+
     function mostrarHome(nombre){
       const saludo = nombre === 'Valeska' ? 'Bienvenida' : 'Bienvenido';
       homeTitle.textContent = `${saludo}, ${nombre} 🌾 ¿Qué deseamos hacer hoy?`;
       document.querySelector('.stage').style.display = 'none';
-      homeScreen.classList.add('show');
+      mostrarPantalla(homeScreen);
     }
 
     document.getElementById('loginForm').addEventListener('submit', (e)=>{
@@ -513,13 +775,6 @@
       } else {
         showToast('RUT o clave incorrectos');
       }
-    });
-
-    document.getElementById('btnIngresarPrenda').addEventListener('click', ()=>{
-      showToast('Ingresar prenda — próximo paso 🧵');
-    });
-    document.getElementById('btnRegistrarVenta').addEventListener('click', ()=>{
-      showToast('Registrar venta — próximo paso 🌿');
     });
 
     // --- Fecha actualizada ---
