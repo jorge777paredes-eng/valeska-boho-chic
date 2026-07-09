@@ -870,7 +870,7 @@
               <span class="photo-label">Foto 3</span>
             </div>
           </div>
-          <input type="file" id="inputFoto" accept="image/*" capture="environment" style="display:none">
+          <input type="file" id="inputFoto" accept="image/*" style="display:none">
         </div>
 
         <div class="field">
@@ -1480,7 +1480,7 @@
             const sw = w / escala, sh = h / escala;
             const sx = (img.width - sw) / 2, sy = (img.height - sh) / 2;
             ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
-            resolve(canvas.toDataURL('image/jpeg', 0.85));
+            resolve(canvas.toDataURL('image/jpeg', 0.92));
           } catch(e){
             resolve(null); // imagen bloqueada por CORS u otro error: seguimos sin foto
           }
@@ -1564,7 +1564,7 @@
         doc.roundedRect(x, y, cardW, cardH, 3, 3, 'FD');
 
         const fotosDisponibles = [p.foto1_url, p.foto2_url, p.foto3_url].filter(Boolean);
-        const fotoAltoMM = 52;
+        const fotoAltoMM = 58;
         const anchoUtil = cardW - 6;
         const gapFoto = 1.5;
 
@@ -1579,7 +1579,7 @@
           const n = fotosDisponibles.length;
           const anchoSlot = (anchoUtil - gapFoto * (n - 1)) / n;
           const datas = await Promise.all(
-            fotosDisponibles.map(url => cargarImagenRecortada(url, Math.round(anchoSlot * 7), Math.round(fotoAltoMM * 7)))
+            fotosDisponibles.map(url => cargarImagenRecortada(url, Math.round(anchoSlot * 12), Math.round(fotoAltoMM * 12)))
           );
           let cx = x + 3;
           for(let i = 0; i < n; i++){
@@ -1610,18 +1610,8 @@
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(12.5);
         doc.setTextColor(...TERRACOTTA);
-        const total = p.total != null ? p.total : (p.precio || 0) * cantidad;
-        const totalTxt = Number(total).toLocaleString('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 });
-        doc.text(totalTxt, x + 4, textY);
-
-        if(cantidad > 1){
-          textY += 5;
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(7.5);
-          doc.setTextColor(140, 130, 115);
-          const unidadTxt = Number(p.precio || 0).toLocaleString('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 });
-          doc.text(`${unidadTxt} c/u`, x + 4, textY);
-        }
+        const precioUnitTxt = Number(p.precio || 0).toLocaleString('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 });
+        doc.text(precioUnitTxt, x + 4, textY);
 
         if(p.vendida){
           doc.setFillColor(...INK);
