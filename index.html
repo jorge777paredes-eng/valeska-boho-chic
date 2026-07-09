@@ -526,6 +526,31 @@
     line-height:1;
   }
 
+  .chip-checkbox{
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(201,162,78,0.14);
+    border: 1.5px solid rgba(201,162,78,0.35);
+    border-radius: 999px;
+    padding: 0.6rem 1rem;
+    margin: -0.6rem 0 1.4rem;
+    cursor: pointer;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem;
+    color: var(--ink);
+    transition: background .2s ease, border-color .2s ease;
+  }
+  .chip-checkbox:has(input:checked){
+    background: rgba(201,162,78,0.28);
+    border-color: var(--gold);
+  }
+  .chip-checkbox input{
+    width: 17px; height: 17px;
+    accent-color: var(--gold);
+    cursor: pointer;
+  }
+
   .field-row{
     display:flex;
     gap: 0.8rem;
@@ -651,6 +676,16 @@
     font-size: 0.58rem;
     letter-spacing:0.05em;
     text-transform:uppercase;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+  }
+  .gallery-card .card-avance{
+    position:absolute;
+    bottom: 0.5rem; left: 0.5rem;
+    background: rgba(201,162,78,0.92);
+    color:#fff;
+    font-size: 0.58rem;
+    letter-spacing:0.03em;
     padding: 0.2rem 0.5rem;
     border-radius: 999px;
   }
@@ -864,6 +899,11 @@
           </select>
         </div>
 
+        <label class="chip-checkbox" for="inputAvanceTemporada">
+          <input type="checkbox" id="inputAvanceTemporada">
+          <span>🌟 Avance de temporada</span>
+        </label>
+
         <div class="field-row">
           <div class="field">
             <label for="inputTalla">Talla</label>
@@ -914,6 +954,7 @@
           <label for="filtroCategoria">Filtrar por tipo</label>
           <select id="filtroCategoria">
             <option value="">Todas las categorías</option>
+            <option value="__avance__">🌟 Avance de temporada</option>
             <option value="Vestidos">Vestidos</option>
             <option value="Blusas y tops">Blusas y tops</option>
             <option value="Pantalones">Pantalones</option>
@@ -1169,6 +1210,7 @@
           precio: precioUnidad,
           total: precioUnidad * cantidad,
           fecha_ingreso: document.getElementById('inputFecha').value,
+          avance_temporada: document.getElementById('inputAvanceTemporada').checked,
           foto1_url, foto2_url, foto3_url,
         };
 
@@ -1280,7 +1322,9 @@
       galeriaGrid.innerHTML = '';
 
       let query = sb.from('prendas').select('*').order('created_at', { ascending:false });
-      if(filtroCategoria.value){
+      if(filtroCategoria.value === '__avance__'){
+        query = query.eq('avance_temporada', true);
+      } else if(filtroCategoria.value){
         query = query.eq('categoria', filtroCategoria.value);
       }
 
@@ -1313,6 +1357,7 @@
           <div class="card-photo">
             <input type="checkbox" class="card-select" data-id="${p.id}">
             ${p.vendida ? '<span class="card-vendida">Vendida</span>' : ''}
+            ${p.avance_temporada ? '<span class="card-avance">🌟 Avance</span>' : ''}
             ${foto ? `<img src="${foto}" alt="${p.nombre}">` : '<span class="sin-foto">📷</span>'}
           </div>
           <div class="card-body">
@@ -1408,6 +1453,7 @@
       document.getElementById('inputCantidad').value = prenda.cantidad || 1;
       document.getElementById('inputPrecio').value = prenda.precio || '';
       document.getElementById('inputFecha').value = prenda.fecha_ingreso || fechaHoyISO();
+      document.getElementById('inputAvanceTemporada').checked = !!prenda.avance_temporada;
       actualizarTotal();
 
       const urls = [prenda.foto1_url, prenda.foto2_url, prenda.foto3_url];
@@ -1616,7 +1662,8 @@
       btn.textContent = 'Generando PDF...';
 
       try{
-        await generarPDF(seleccionadas, filtroCategoria.value || null);
+        const nombreFiltro = filtroCategoria.value === '__avance__' ? '🌟 Avance de temporada' : filtroCategoria.value;
+        await generarPDF(seleccionadas, nombreFiltro || null);
         showToast('PDF descargado 📄');
       } catch(err){
         console.error(err);
