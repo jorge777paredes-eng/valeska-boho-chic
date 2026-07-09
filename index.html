@@ -727,6 +727,7 @@
 
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 </head>
 <body>
   <div class="stage">
@@ -1357,14 +1358,186 @@
       mostrarPantalla(formPrendaScreen);
     }
 
-    // Botón PDF (la generación real del PDF se programa más adelante)
-    document.getElementById('btnDescargarPDF').addEventListener('click', ()=>{
-      const seleccionadas = document.querySelectorAll('.card-select:checked').length;
-      if(seleccionadas === 0){
+    // ================= PDF DEL CATÁLOGO =================
+    function cargarImagenRecortada(url, w, h){
+      return new Promise((resolve)=>{
+        if(!url){ resolve(null); return; }
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = ()=>{
+          try{
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            const escala = Math.max(w / img.width, h / img.height);
+            const sw = w / escala, sh = h / escala;
+            const sx = (img.width - sw) / 2, sy = (img.height - sh) / 2;
+            ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/jpeg', 0.85));
+          } catch(e){
+            resolve(null); // imagen bloqueada por CORS u otro error: seguimos sin foto
+          }
+        };
+        img.onerror = ()=> resolve(null);
+        img.src = url;
+      });
+    }
+
+    async function generarPDF(lista, filtroActivo){
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit:'mm', format:'a4' });
+      const pageW = 210, pageH = 297, marginX = 14;
+
+      const CREAM_DEEP=[245,238,225], INK=[51,41,31],
+            TERRACOTTA=[210,139,93], SAGE=[143,170,155], LAVENDER=[178,156,194], GOLD=[201,162,78];
+
+      function dibujarStitch(y){
+        const colores = [TERRACOTTA, LAVENDER, SAGE, GOLD];
+        let x = marginX, i = 0;
+        doc.setLineWidth(0.8);
+        while(x < pageW - marginX){
+          doc.setDrawColor(...colores[i % colores.length]);
+          doc.line(x, y, x + 4, y);
+          x += 6; i++;
+        }
+      }
+
+      function dibujarHeader(){
+        doc.setFillColor(...CREAM_DEEP);
+        doc.rect(0, 0, pageW, 36, 'F');
+
+        const logoEl = document.querySelector('.logo-circle img');
+        if(logoEl && logoEl.src){
+          try{ doc.addImage(logoEl.src, 'PNG', marginX, 7, 22, 22); }catch(e){}
+        }
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(20);
+        doc.setTextColor(...INK);
+        doc.text('VALESKA', marginX + 27, 18);
+
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(9.5);
+        doc.setTextColor(...TERRACOTTA);
+        doc.text('Catálogo de prendas · Boho Chic', marginX + 27, 24.5);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(120, 110, 95);
+        doc.text(`Generado: ${new Date().toLocaleDateString('es-CL')}`, pageW - marginX, 10, { align:'right' });
+        if(filtroActivo){
+          doc.text(`Filtro: ${filtroActivo}`, pageW - marginX, 15, { align:'right' });
+        }
+
+        dibujarStitch(38);
+      }
+
+      dibujarHeader();
+
+      const cardW = 86, cardH = 92, gapX = 8, gapY = 8;
+      const colX = [marginX, marginX + cardW + gapX];
+      let col = 0, y = 48;
+
+      for(const p of lista){
+        if(y + cardH > pageH - 18){
+          doc.addPage();
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(9);
+          doc.setTextColor(...TERRACOTTA);
+          doc.text('Valeska — Catálogo (continuación)', marginX, 10);
+          dibujarStitch(13);
+          col = 0;
+          y = 20;
+        }
+
+        const x = colX[col];
+
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(225, 218, 206);
+        doc.roundedRect(x, y, cardW, cardH, 3, 3, 'FD');
+
+        const fotoUrl = p.foto1_url || p.foto2_url || p.foto3_url;
+        const fotoAltoMM = 52;
+        const fotoData = await cargarImagenRecortada(fotoUrl, 600, 440);
+
+        if(fotoData){
+          try{ doc.addImage(fotoData, 'JPEG', x + 3, y + 3, cardW - 6, fotoAltoMM); }catch(e){}
+        } else {
+          doc.setFillColor(240, 235, 226);
+          doc.rect(x + 3, y + 3, cardW - 6, fotoAltoMM, 'F');
+          doc.setFont('helvetica', 'italic');
+          doc.setFontSize(8.5);
+          doc.setTextColor(150, 140, 125);
+          doc.text('Sin foto', x + cardW / 2, y + 3 + fotoAltoMM / 2, { align:'center' });
+        }
+
+        let textY = y + fotoAltoMM + 10;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11.5);
+        doc.setTextColor(...INK);
+        doc.text(p.nombre || '', x + 4, textY, { maxWidth: cardW - 8 });
+
+        textY += 6;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(110, 100, 88);
+        doc.text(`${p.categoria || ''} · Talla ${p.talla || ''}`, x + 4, textY);
+
+        textY += 7;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12.5);
+        doc.setTextColor(...TERRACOTTA);
+        const precioTxt = Number(p.precio || 0).toLocaleString('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 });
+        doc.text(precioTxt, x + 4, textY);
+
+        if(p.vendida){
+          doc.setFillColor(...INK);
+          doc.roundedRect(x + cardW - 24, y + 5, 20, 6, 2, 2, 'F');
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(7);
+          doc.setTextColor(255, 255, 255);
+          doc.text('VENDIDA', x + cardW - 14, y + 9, { align:'center' });
+        }
+
+        col++;
+        if(col > 1){ col = 0; y += cardH + gapY; }
+      }
+
+      const totalPaginas = doc.internal.getNumberOfPages();
+      for(let i = 1; i <= totalPaginas; i++){
+        doc.setPage(i);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(150, 140, 125);
+        doc.text(`Valeska Boho Chic · Página ${i} de ${totalPaginas}`, pageW / 2, pageH - 8, { align:'center' });
+      }
+
+      doc.save(`valeska-catalogo-${fechaHoyISO()}.pdf`);
+    }
+
+    document.getElementById('btnDescargarPDF').addEventListener('click', async ()=>{
+      const idsSeleccionados = Array.from(document.querySelectorAll('.card-select:checked')).map(cb => cb.dataset.id);
+      if(idsSeleccionados.length === 0){
         showToast('Selecciona al menos una prenda primero');
         return;
       }
-      showToast(`PDF de ${seleccionadas} prenda${seleccionadas === 1 ? '' : 's'} — próximo paso 📄`);
+
+      const seleccionadas = prendasCache.filter(p => idsSeleccionados.includes(String(p.id)));
+      const btn = document.getElementById('btnDescargarPDF');
+      const textoOriginal = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Generando PDF...';
+
+      try{
+        await generarPDF(seleccionadas, filtroCategoria.value || null);
+        showToast('PDF descargado 📄');
+      } catch(err){
+        console.error(err);
+        showToast('No se pudo generar el PDF. Intenta de nuevo.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = textoOriginal;
+      }
     });
   </script>
 </body>
