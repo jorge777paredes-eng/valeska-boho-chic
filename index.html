@@ -1456,19 +1456,34 @@
         doc.setDrawColor(225, 218, 206);
         doc.roundedRect(x, y, cardW, cardH, 3, 3, 'FD');
 
-        const fotoUrl = p.foto1_url || p.foto2_url || p.foto3_url;
+        const fotosDisponibles = [p.foto1_url, p.foto2_url, p.foto3_url].filter(Boolean);
         const fotoAltoMM = 52;
-        const fotoData = await cargarImagenRecortada(fotoUrl, 600, 440);
+        const anchoUtil = cardW - 6;
+        const gapFoto = 1.5;
 
-        if(fotoData){
-          try{ doc.addImage(fotoData, 'JPEG', x + 3, y + 3, cardW - 6, fotoAltoMM); }catch(e){}
-        } else {
+        if(fotosDisponibles.length === 0){
           doc.setFillColor(240, 235, 226);
-          doc.rect(x + 3, y + 3, cardW - 6, fotoAltoMM, 'F');
+          doc.rect(x + 3, y + 3, anchoUtil, fotoAltoMM, 'F');
           doc.setFont('helvetica', 'italic');
           doc.setFontSize(8.5);
           doc.setTextColor(150, 140, 125);
           doc.text('Sin foto', x + cardW / 2, y + 3 + fotoAltoMM / 2, { align:'center' });
+        } else {
+          const n = fotosDisponibles.length;
+          const anchoSlot = (anchoUtil - gapFoto * (n - 1)) / n;
+          const datas = await Promise.all(
+            fotosDisponibles.map(url => cargarImagenRecortada(url, Math.round(anchoSlot * 7), Math.round(fotoAltoMM * 7)))
+          );
+          let cx = x + 3;
+          for(let i = 0; i < n; i++){
+            if(datas[i]){
+              try{ doc.addImage(datas[i], 'JPEG', cx, y + 3, anchoSlot, fotoAltoMM); }catch(e){}
+            } else {
+              doc.setFillColor(240, 235, 226);
+              doc.rect(cx, y + 3, anchoSlot, fotoAltoMM, 'F');
+            }
+            cx += anchoSlot + gapFoto;
+          }
         }
 
         let textY = y + fotoAltoMM + 10;
