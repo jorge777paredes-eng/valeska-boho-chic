@@ -278,6 +278,12 @@
     outline: 2px solid var(--gold);
     outline-offset: 2px;
   }
+  .field input[readonly]{
+    background: rgba(51,41,31,0.055);
+    color: var(--terracotta);
+    font-weight: 600;
+    cursor: default;
+  }
 
   .modal-actions{
     display:flex;
@@ -419,20 +425,23 @@
   }
 
   .form-back{
-    background:none;
-    border:none;
+    background: rgba(51,41,31,0.08);
+    border: none;
     cursor:pointer;
     font-family:'Jost', sans-serif;
-    font-size: 0.85rem;
-    letter-spacing:0.04em;
-    color: rgba(51,41,31,0.55);
-    display:flex;
+    font-weight: 600;
+    font-size: 0.9rem;
+    letter-spacing:0.03em;
+    color: var(--ink);
+    display:inline-flex;
     align-items:center;
     gap: 0.4rem;
     margin-bottom: 1.6rem;
-    padding: 0.3rem 0;
+    padding: 0.55rem 1rem;
+    border-radius: 999px;
+    transition: background .2s ease, transform .2s ease;
   }
-  .form-back:hover{ color: var(--ink); }
+  .form-back:hover{ background: rgba(51,41,31,0.16); transform: translateX(-2px); }
 
   .form-title{
     font-family:'Fraunces', serif;
@@ -861,8 +870,19 @@
             </select>
           </div>
           <div class="field">
-            <label for="inputPrecio">Precio (CLP)</label>
+            <label for="inputCantidad">Cantidad</label>
+            <input type="number" id="inputCantidad" min="1" step="1" value="1" required>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="inputPrecio">Precio Unidad (CLP)</label>
             <input type="number" id="inputPrecio" placeholder="Ej: 24990" min="0" step="10" required>
+          </div>
+          <div class="field">
+            <label for="inputTotal">Total</label>
+            <input type="text" id="inputTotal" readonly value="$0">
           </div>
         </div>
 
@@ -1068,9 +1088,21 @@
       inputFoto.value = '';
     });
 
+    function actualizarTotal(){
+      const precio = Number(document.getElementById('inputPrecio').value) || 0;
+      const cantidad = Number(document.getElementById('inputCantidad').value) || 0;
+      const total = precio * cantidad;
+      document.getElementById('inputTotal').value = total.toLocaleString('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 });
+      return total;
+    }
+    document.getElementById('inputPrecio').addEventListener('input', actualizarTotal);
+    document.getElementById('inputCantidad').addEventListener('input', actualizarTotal);
+
     function resetFormPrenda(){
       document.getElementById('formPrenda').reset();
       document.getElementById('inputFecha').value = fechaHoyISO();
+      document.getElementById('inputCantidad').value = 1;
+      actualizarTotal();
       for(let i=0; i<3; i++){
         fotosPrenda[i] = null;
         renderSlot(photoSlots[i], i);
@@ -1116,11 +1148,16 @@
           resolverUrlFoto(fotosPrenda[2], slugBase || 'prenda-3'),
         ]);
 
+        const cantidad = Number(document.getElementById('inputCantidad').value) || 1;
+        const precioUnidad = Number(document.getElementById('inputPrecio').value) || 0;
+
         const datosPrenda = {
           nombre: document.getElementById('inputNombrePrenda').value,
           categoria: document.getElementById('inputCategoria').value,
           talla: document.getElementById('inputTalla').value,
-          precio: Number(document.getElementById('inputPrecio').value),
+          cantidad: cantidad,
+          precio: precioUnidad,
+          total: precioUnidad * cantidad,
           fecha_ingreso: document.getElementById('inputFecha').value,
           foto1_url, foto2_url, foto3_url,
         };
@@ -1138,11 +1175,20 @@
 
         if(error) throw error;
 
-        showToast(editandoId ? 'Cambios guardados 🌾' : 'Prenda guardada 🌾');
-        const volverA = pantallaOrigenForm;
-        prepararFormularioNuevo();
-        mostrarPantalla(volverA);
-        if(volverA === galleryScreen) cargarGaleria();
+        if(editandoId){
+          // Al editar sí volvemos a la galería, para ver el cambio reflejado.
+          showToast('Cambios guardados 🌾');
+          const volverA = pantallaOrigenForm;
+          prepararFormularioNuevo();
+          mostrarPantalla(volverA);
+          cargarGaleria();
+        } else {
+          // Al ingresar una prenda nueva, NO salimos: se limpia el formulario
+          // y queda listo para seguir ingresando la siguiente.
+          showToast('Prenda guardada 🌾 Lista para la siguiente');
+          prepararFormularioNuevo();
+          document.getElementById('inputNombrePrenda').focus();
+        }
 
       } catch(err){
         console.error(err);
@@ -1250,6 +1296,8 @@
 
     function renderCardHTML(p){
       const foto = p.foto1_url || p.foto2_url || p.foto3_url;
+      const cantidad = p.cantidad || 1;
+      const total = p.total != null ? p.total : (p.precio || 0) * cantidad;
       return `
         <div class="gallery-card" data-id="${p.id}">
           <div class="card-photo">
@@ -1259,8 +1307,9 @@
           </div>
           <div class="card-body">
             <p class="card-nombre">${p.nombre}</p>
-            <p class="card-meta">${p.categoria} · Talla ${p.talla}</p>
-            <p class="card-precio">${formatoCLP(p.precio)}</p>
+            <p class="card-meta">${p.categoria} · Talla ${p.talla} · Cant. ${cantidad}</p>
+            <p class="card-precio">${formatoCLP(total)}</p>
+            ${cantidad > 1 ? `<p class="card-meta" style="margin-top:-0.4rem;">${formatoCLP(p.precio)} c/u</p>` : ''}
             <div class="card-actions">
               <button type="button" class="card-btn-editar" data-editar="${p.id}">Editar</button>
               <button type="button" class="card-btn-eliminar" data-eliminar="${p.id}">✕</button>
@@ -1346,8 +1395,10 @@
       document.getElementById('inputNombrePrenda').value = prenda.nombre || '';
       document.getElementById('inputCategoria').value = prenda.categoria || '';
       document.getElementById('inputTalla').value = prenda.talla || '';
+      document.getElementById('inputCantidad').value = prenda.cantidad || 1;
       document.getElementById('inputPrecio').value = prenda.precio || '';
       document.getElementById('inputFecha').value = prenda.fecha_ingreso || fechaHoyISO();
+      actualizarTotal();
 
       const urls = [prenda.foto1_url, prenda.foto2_url, prenda.foto3_url];
       urls.forEach((url, i)=>{
@@ -1492,18 +1543,29 @@
         doc.setTextColor(...INK);
         doc.text(p.nombre || '', x + 4, textY, { maxWidth: cardW - 8 });
 
+        const cantidad = p.cantidad || 1;
         textY += 6;
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8.5);
         doc.setTextColor(110, 100, 88);
-        doc.text(`${p.categoria || ''} · Talla ${p.talla || ''}`, x + 4, textY);
+        doc.text(`${p.categoria || ''} · Talla ${p.talla || ''} · Cant. ${cantidad}`, x + 4, textY);
 
         textY += 7;
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(12.5);
         doc.setTextColor(...TERRACOTTA);
-        const precioTxt = Number(p.precio || 0).toLocaleString('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 });
-        doc.text(precioTxt, x + 4, textY);
+        const total = p.total != null ? p.total : (p.precio || 0) * cantidad;
+        const totalTxt = Number(total).toLocaleString('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 });
+        doc.text(totalTxt, x + 4, textY);
+
+        if(cantidad > 1){
+          textY += 5;
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(7.5);
+          doc.setTextColor(140, 130, 115);
+          const unidadTxt = Number(p.precio || 0).toLocaleString('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 });
+          doc.text(`${unidadTxt} c/u`, x + 4, textY);
+        }
 
         if(p.vendida){
           doc.setFillColor(...INK);
