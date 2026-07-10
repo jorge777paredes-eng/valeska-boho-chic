@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" data-build="2026-07-10-04">
+<html lang="es" data-build="2026-07-10-06">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
@@ -250,7 +250,7 @@
     color: rgba(51,41,31,0.55);
     margin-bottom: 0.4rem;
   }
-  .field input, .field select{
+  .field input, .field select, .field textarea{
     width:100%;
     font-family:'Jost', sans-serif;
     font-size: 1rem;
@@ -264,6 +264,11 @@
     appearance: none;
     -webkit-appearance: none;
   }
+  .field textarea{
+    font-family: 'Jost', sans-serif;
+    resize: vertical;
+    line-height: 1.4;
+  }
   .field select{
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2333291F' stroke-width='2' stroke-linecap='round'><polyline points='6 9 12 15 18 9'/></svg>");
     background-repeat: no-repeat;
@@ -271,11 +276,11 @@
     background-size: 16px;
     padding-right: 2.4rem;
   }
-  .field input:focus, .field select:focus{
+  .field input:focus, .field select:focus, .field textarea:focus{
     outline:none;
     border-color: var(--terracotta);
   }
-  .field input:focus-visible, .field select:focus-visible{
+  .field input:focus-visible, .field select:focus-visible, .field textarea:focus-visible{
     outline: 2px solid var(--gold);
     outline-offset: 2px;
   }
@@ -524,6 +529,32 @@
     display:flex; align-items:center; justify-content:center;
     font-size: 0.75rem;
     line-height:1;
+  }
+
+  .talla-chips{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.2rem;
+  }
+  .talla-chip{
+    min-width: 44px;
+    padding: 0.5rem 0.7rem;
+    border-radius: 10px;
+    border: 1.5px solid rgba(51,41,31,0.18);
+    background: #fff;
+    color: var(--ink);
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, color .15s ease;
+  }
+  .talla-chip:hover{ border-color: var(--terracotta); }
+  .talla-chip.selected{
+    background: var(--terracotta);
+    border-color: var(--terracotta);
+    color: #fff;
   }
 
   .chip-checkbox{
@@ -1130,17 +1161,26 @@
         </div>
 
         <div class="field">
+          <label for="inputDescripcion">Descripción (opcional)</label>
+          <textarea id="inputDescripcion" rows="3" placeholder="Ej: Es una talla entre M y L, de medidas xxx"></textarea>
+        </div>
+
+        <div class="field">
           <label for="inputCategoria">Categoría</label>
           <select id="inputCategoria" required>
             <option value="" disabled selected>Selecciona una categoría</option>
             <option value="Vestidos">Vestidos</option>
             <option value="Blusas y tops">Blusas y tops</option>
+            <option value="Polera">Polera</option>
             <option value="Pantalones">Pantalones</option>
             <option value="Jeans">Jeans</option>
             <option value="Faldas">Faldas</option>
+            <option value="Jardineras">Jardineras</option>
             <option value="Enteritos">Enteritos</option>
             <option value="Sweter">Sweter</option>
             <option value="Polerones">Polerones</option>
+            <option value="Abrigo">Abrigo</option>
+            <option value="Bombers">Bombers</option>
             <option value="Ponchos y chaquetas">Ponchos y chaquetas</option>
             <option value="Tapados">Tapados</option>
             <option value="Chalecos">Chalecos</option>
@@ -1175,36 +1215,34 @@
           <span>🌟 Avance de temporada</span>
         </label>
 
-        <div class="field-row">
-          <div class="field">
-            <label for="inputTalla">Talla</label>
-            <select id="inputTalla" required>
-              <option value="" disabled selected>Talla</option>
-              <option value="XS">XS</option>
-              <option value="S">S</option>
-              <option value="M">M</option>
-              <option value="L">L</option>
-              <option value="XL">XL</option>
-              <option value="XXL">XXL</option>
-              <option value="XXXL">XXXL</option>
-              <option value="Única">Única</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="inputCantidad">Cantidad</label>
-            <input type="number" id="inputCantidad" min="1" step="1" value="1" required>
+        <div class="field">
+          <label>Talla (puedes elegir más de una)</label>
+          <div class="talla-chips" id="tallaChips">
+            <button type="button" class="talla-chip" data-talla="XS">XS</button>
+            <button type="button" class="talla-chip" data-talla="S">S</button>
+            <button type="button" class="talla-chip" data-talla="M">M</button>
+            <button type="button" class="talla-chip" data-talla="L">L</button>
+            <button type="button" class="talla-chip" data-talla="XL">XL</button>
+            <button type="button" class="talla-chip" data-talla="XXL">XXL</button>
+            <button type="button" class="talla-chip" data-talla="XXXL">XXXL</button>
+            <button type="button" class="talla-chip" data-talla="Única">Única</button>
           </div>
         </div>
 
         <div class="field-row">
           <div class="field">
+            <label for="inputCantidad">Cantidad</label>
+            <input type="number" id="inputCantidad" min="1" step="1" value="1" required>
+          </div>
+          <div class="field">
             <label for="inputPrecio">Precio Unidad (CLP)</label>
             <input type="number" id="inputPrecio" placeholder="Ej: 24990" min="0" step="10" required>
           </div>
-          <div class="field">
-            <label for="inputTotal">Total</label>
-            <input type="text" id="inputTotal" readonly value="$0">
-          </div>
+        </div>
+
+        <div class="field">
+          <label for="inputTotal">Total</label>
+          <input type="text" id="inputTotal" readonly value="$0">
         </div>
 
         <div class="form-actions">
@@ -1228,12 +1266,16 @@
             <option value="__avance__">🌟 Avance de temporada</option>
             <option value="Vestidos">Vestidos</option>
             <option value="Blusas y tops">Blusas y tops</option>
+            <option value="Polera">Polera</option>
             <option value="Pantalones">Pantalones</option>
             <option value="Jeans">Jeans</option>
             <option value="Faldas">Faldas</option>
+            <option value="Jardineras">Jardineras</option>
             <option value="Enteritos">Enteritos</option>
             <option value="Sweter">Sweter</option>
             <option value="Polerones">Polerones</option>
+            <option value="Abrigo">Abrigo</option>
+            <option value="Bombers">Bombers</option>
             <option value="Ponchos y chaquetas">Ponchos y chaquetas</option>
             <option value="Tapados">Tapados</option>
             <option value="Chalecos">Chalecos</option>
@@ -1303,6 +1345,7 @@
       <p class="modal-title" id="verNombre"></p>
       <p class="confirm-msg" id="verMeta" style="margin-bottom:0.3rem;"></p>
       <p class="card-precio" id="verPrecio" style="text-align:center; font-size:1.15rem;"></p>
+      <p class="confirm-msg" id="verDescripcion" style="display:none; margin-top:0.6rem;"></p>
     </div>
   </div>
 
@@ -1471,6 +1514,27 @@
     document.getElementById('inputPrecio').addEventListener('input', actualizarTotal);
     document.getElementById('inputCantidad').addEventListener('input', actualizarTotal);
 
+    // ---- Tallas (selección múltiple con chips) ----
+    const tallaChipsEl = document.getElementById('tallaChips');
+
+    tallaChipsEl.addEventListener('click', (e)=>{
+      const chip = e.target.closest('.talla-chip');
+      if(chip) chip.classList.toggle('selected');
+    });
+
+    function obtenerTallasSeleccionadas(){
+      return Array.from(tallaChipsEl.querySelectorAll('.talla-chip.selected'))
+        .map(c => c.dataset.talla)
+        .join(', ');
+    }
+
+    function marcarTallas(tallaTexto){
+      const seleccionadas = (tallaTexto || '').split(',').map(t => t.trim()).filter(Boolean);
+      tallaChipsEl.querySelectorAll('.talla-chip').forEach(chip=>{
+        chip.classList.toggle('selected', seleccionadas.includes(chip.dataset.talla));
+      });
+    }
+
     // ---- Campos "Otro" (categoría y proveedor) ----
     const selectCategoria = document.getElementById('inputCategoria');
     const campoCategoriaOtro = document.getElementById('campoCategoriaOtro');
@@ -1498,6 +1562,7 @@
       document.getElementById('formPrenda').reset();
       document.getElementById('inputFecha').value = fechaHoyISO();
       document.getElementById('inputCantidad').value = 1;
+      marcarTallas('');
       actualizarTotal();
       actualizarCampoOtro(selectCategoria, campoCategoriaOtro, inputCategoriaOtro);
       actualizarCampoOtro(selectProveedor, campoProveedorOtro, inputProveedorOtro);
@@ -1531,6 +1596,11 @@
         return;
       }
 
+      if(!obtenerTallasSeleccionadas()){
+        showToast('Selecciona al menos una talla');
+        return;
+      }
+
       const saveBtn = document.getElementById('btnGuardarPrenda');
       const textoOriginal = saveBtn.textContent;
       saveBtn.disabled = true;
@@ -1551,13 +1621,14 @@
 
         const datosPrenda = {
           nombre: document.getElementById('inputNombrePrenda').value,
+          descripcion: document.getElementById('inputDescripcion').value.trim() || null,
           categoria: document.getElementById('inputCategoria').value,
           categoria_otro: document.getElementById('inputCategoria').value === 'Otro'
             ? document.getElementById('inputCategoriaOtro').value : null,
           proveedor: document.getElementById('inputProveedor').value,
           proveedor_otro: document.getElementById('inputProveedor').value === 'Otro'
             ? document.getElementById('inputProveedorOtro').value : null,
-          talla: document.getElementById('inputTalla').value,
+          talla: obtenerTallasSeleccionadas(),
           cantidad: cantidad,
           precio: precioUnidad,
           total: precioUnidad * cantidad,
@@ -1885,6 +1956,14 @@
       if(prenda.avance_temporada) badgesHTML += '<span class="ver-badge ver-badge-avance">🌟 Avance de temporada</span>';
       badgesEl.innerHTML = badgesHTML;
 
+      const descEl = document.getElementById('verDescripcion');
+      if(prenda.descripcion){
+        descEl.textContent = prenda.descripcion;
+        descEl.style.display = 'block';
+      } else {
+        descEl.style.display = 'none';
+      }
+
       verPrendaBackdrop.classList.add('show');
     }
 
@@ -1948,6 +2027,7 @@
       document.getElementById('btnGuardarPrenda').textContent = 'Guardar cambios';
 
       document.getElementById('inputNombrePrenda').value = prenda.nombre || '';
+      document.getElementById('inputDescripcion').value = prenda.descripcion || '';
       document.getElementById('inputCategoria').value = prenda.categoria || '';
       document.getElementById('inputCategoriaOtro').value = prenda.categoria_otro || '';
       actualizarCampoOtro(selectCategoria, campoCategoriaOtro, inputCategoriaOtro);
@@ -1956,7 +2036,7 @@
       document.getElementById('inputProveedorOtro').value = prenda.proveedor_otro || '';
       actualizarCampoOtro(selectProveedor, campoProveedorOtro, inputProveedorOtro);
 
-      document.getElementById('inputTalla').value = prenda.talla || '';
+      marcarTallas(prenda.talla || '');
       document.getElementById('inputCantidad').value = prenda.cantidad || 1;
       document.getElementById('inputPrecio').value = prenda.precio || '';
       document.getElementById('inputFecha').value = prenda.fecha_ingreso || fechaHoyISO();
@@ -2151,6 +2231,20 @@
         doc.setTextColor(...TERRACOTTA);
         const precioUnitTxt = Number(p.precio || 0).toLocaleString('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 });
         doc.text(precioUnitTxt, x + 4, textY);
+
+        if(p.descripcion){
+          textY += 5;
+          doc.setFont('helvetica', 'italic');
+          doc.setFontSize(7);
+          doc.setTextColor(130, 120, 105);
+          let textoDesc = p.descripcion;
+          const anchoMaxDesc = cardW - 8;
+          while(doc.getTextWidth(textoDesc) > anchoMaxDesc && textoDesc.length > 3){
+            textoDesc = textoDesc.slice(0, -1);
+          }
+          if(textoDesc.length < p.descripcion.length) textoDesc = textoDesc.slice(0, -3) + '...';
+          doc.text(textoDesc, x + 4, textY);
+        }
 
         if(p.vendida){
           doc.setFillColor(...INK);
