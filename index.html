@@ -620,6 +620,36 @@
     flex:1;
     margin-bottom:0;
   }
+  .gallery-select-bar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 0.8rem;
+    margin-bottom: 1.2rem;
+  }
+  .gallery-select-bar .gallery-count{ margin: 0; }
+  .gallery-select-actions{
+    display:flex;
+    align-items:center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+  }
+  .gallery-select-actions button{
+    background:none;
+    border:none;
+    cursor:pointer;
+    font-family:'Jost', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing:0.02em;
+    color: var(--terracotta);
+    padding: 0.2rem;
+  }
+  .gallery-select-actions button:hover{ text-decoration: underline; }
+  .gallery-select-sep{
+    color: rgba(51,41,31,0.3);
+    font-size: 0.7rem;
+  }
   .gallery-count{
     font-family:'Jost', sans-serif;
     font-size: 0.72rem;
@@ -1059,7 +1089,14 @@
         </div>
       </div>
 
-      <p class="gallery-count" id="galeriaCount">Cargando prendas...</p>
+      <div class="gallery-select-bar">
+        <p class="gallery-count" id="galeriaCount">Cargando prendas...</p>
+        <div class="gallery-select-actions">
+          <button type="button" id="btnSeleccionarTodo">Seleccionar todo</button>
+          <span class="gallery-select-sep">·</span>
+          <button type="button" id="btnLimpiarSeleccion">Limpiar</button>
+        </div>
+      </div>
 
       <div class="gallery-grid" id="galeriaGrid"></div>
 
@@ -1482,6 +1519,19 @@
 
     filtroCategoria.addEventListener('change', cargarGaleria);
 
+    document.getElementById('btnSeleccionarTodo').addEventListener('click', ()=>{
+      document.querySelectorAll('.card-select').forEach(cb=>{
+        cb.checked = true;
+        cb.closest('.gallery-card').classList.add('selected');
+      });
+    });
+    document.getElementById('btnLimpiarSeleccion').addEventListener('click', ()=>{
+      document.querySelectorAll('.card-select').forEach(cb=>{
+        cb.checked = false;
+        cb.closest('.gallery-card').classList.remove('selected');
+      });
+    });
+
     // Selección de tarjetas (para el PDF futuro)
     galeriaGrid.addEventListener('change', (e)=>{
       if(e.target.classList.contains('card-select')){
@@ -1752,7 +1802,7 @@
       dibujarHeader();
 
       const cardW = 86, cardH = 92, gapX = 8, gapY = 8;
-      const FOOTER_RESERVA = 30; // espacio reservado abajo para el pie de página (redes + numeración)
+      const FOOTER_RESERVA = 22; // espacio reservado abajo para el pie de página (redes + numeración)
       const colX = [marginX, marginX + cardW + gapX];
       let col = 0, y = 82;
 
@@ -1837,6 +1887,8 @@
       }
 
       // ---- Pie de página (se repite en cada hoja): redes sociales + numeración ----
+      const INSTAGRAM_URL = 'https://www.instagram.com/valeska__boho_chic/';
+
       function dibujarIconoRed(cx, cy, radio, imgId){
         const el = document.getElementById(imgId);
         if(el && el.src){
@@ -1845,29 +1897,37 @@
       }
 
       const totalPaginas = doc.internal.getNumberOfPages();
-      const radioIcono = 6.5;
-      const espacioIconos = 24;
+      const radioIcono = 4.2;
+      const espacioIconos = 33;
 
       for(let i = 1; i <= totalPaginas; i++){
         doc.setPage(i);
 
-        const cyIconos = pageH - 22;
+        const cyIconos = pageH - 16;
         const centrosX = [pageW/2 - espacioIconos, pageW/2, pageW/2 + espacioIconos];
+        const labelY = cyIconos + radioIcono + 3;
 
         dibujarIconoRed(centrosX[0], cyIconos, radioIcono, 'logoInstagramImg');
         dibujarIconoRed(centrosX[1], cyIconos, radioIcono, 'logoWhatsappImg');
         dibujarIconoRed(centrosX[2], cyIconos, radioIcono, 'logoFacebookImg');
 
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(6.8);
+        doc.setFontSize(6.3);
         doc.setTextColor(...INK);
-        doc.text('Instagram', centrosX[0], cyIconos + radioIcono + 4, { align:'center' });
-        doc.text('WhatsApp', centrosX[1], cyIconos + radioIcono + 4, { align:'center' });
-        doc.text('Facebook', centrosX[2], cyIconos + radioIcono + 4, { align:'center' });
+        doc.text('@valeska__boho_chic', centrosX[0], labelY, { align:'center' });
+        doc.text('+56998831129', centrosX[1], labelY, { align:'center' });
+        doc.text('Valeska Boho Chic', centrosX[2], labelY, { align:'center' });
 
-        doc.setFontSize(7.5);
+        // Instagram queda clickeable: redirige al perfil real
+        doc.link(
+          centrosX[0] - espacioIconos/2 + 1, cyIconos - radioIcono - 2,
+          espacioIconos - 2, (labelY - (cyIconos - radioIcono)) + 3,
+          { url: INSTAGRAM_URL }
+        );
+
+        doc.setFontSize(7);
         doc.setTextColor(150, 140, 125);
-        doc.text(`Valeska Boho Chic · Página ${i} de ${totalPaginas}`, pageW / 2, pageH - 6, { align:'center' });
+        doc.text(`Valeska Boho Chic · Página ${i} de ${totalPaginas}`, pageW / 2, pageH - 4.5, { align:'center' });
       }
 
       doc.save(`valeska-catalogo-${fechaHoyISO()}.pdf`);
