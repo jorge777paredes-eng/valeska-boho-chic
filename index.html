@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" data-build="2026-07-10-01">
+<html lang="es" data-build="2026-07-10-02">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
@@ -1057,6 +1057,26 @@
           </select>
         </div>
 
+        <div class="field" id="campoCategoriaOtro" style="display:none;">
+          <label for="inputCategoriaOtro">¿Cuál categoría?</label>
+          <input type="text" id="inputCategoriaOtro" placeholder="Ej: Boinas">
+        </div>
+
+        <div class="field">
+          <label for="inputProveedor">Proveedor</label>
+          <select id="inputProveedor" required>
+            <option value="" disabled selected>Selecciona un proveedor</option>
+            <option value="DOREMI">DOREMI</option>
+            <option value="Enigmatica">Enigmatica</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+
+        <div class="field" id="campoProveedorOtro" style="display:none;">
+          <label for="inputProveedorOtro">¿Cuál proveedor?</label>
+          <input type="text" id="inputProveedorOtro" placeholder="Ej: Textil Andina">
+        </div>
+
         <label class="chip-checkbox" for="inputAvanceTemporada">
           <input type="checkbox" id="inputAvanceTemporada">
           <span>🌟 Avance de temporada</span>
@@ -1333,11 +1353,36 @@
     document.getElementById('inputPrecio').addEventListener('input', actualizarTotal);
     document.getElementById('inputCantidad').addEventListener('input', actualizarTotal);
 
+    // ---- Campos "Otro" (categoría y proveedor) ----
+    const selectCategoria = document.getElementById('inputCategoria');
+    const campoCategoriaOtro = document.getElementById('campoCategoriaOtro');
+    const inputCategoriaOtro = document.getElementById('inputCategoriaOtro');
+
+    const selectProveedor = document.getElementById('inputProveedor');
+    const campoProveedorOtro = document.getElementById('campoProveedorOtro');
+    const inputProveedorOtro = document.getElementById('inputProveedorOtro');
+
+    function actualizarCampoOtro(select, campo, input){
+      const esOtro = select.value === 'Otro';
+      campo.style.display = esOtro ? 'block' : 'none';
+      input.required = esOtro;
+      if(!esOtro) input.value = '';
+    }
+
+    selectCategoria.addEventListener('change', ()=>{
+      actualizarCampoOtro(selectCategoria, campoCategoriaOtro, inputCategoriaOtro);
+    });
+    selectProveedor.addEventListener('change', ()=>{
+      actualizarCampoOtro(selectProveedor, campoProveedorOtro, inputProveedorOtro);
+    });
+
     function resetFormPrenda(){
       document.getElementById('formPrenda').reset();
       document.getElementById('inputFecha').value = fechaHoyISO();
       document.getElementById('inputCantidad').value = 1;
       actualizarTotal();
+      actualizarCampoOtro(selectCategoria, campoCategoriaOtro, inputCategoriaOtro);
+      actualizarCampoOtro(selectProveedor, campoProveedorOtro, inputProveedorOtro);
       for(let i=0; i<3; i++){
         fotosPrenda[i] = null;
         renderSlot(photoSlots[i], i);
@@ -1389,6 +1434,11 @@
         const datosPrenda = {
           nombre: document.getElementById('inputNombrePrenda').value,
           categoria: document.getElementById('inputCategoria').value,
+          categoria_otro: document.getElementById('inputCategoria').value === 'Otro'
+            ? document.getElementById('inputCategoriaOtro').value : null,
+          proveedor: document.getElementById('inputProveedor').value,
+          proveedor_otro: document.getElementById('inputProveedor').value === 'Otro'
+            ? document.getElementById('inputProveedorOtro').value : null,
           talla: document.getElementById('inputTalla').value,
           cantidad: cantidad,
           precio: precioUnidad,
@@ -1541,6 +1591,13 @@
       return Number(valor || 0).toLocaleString('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 });
     }
 
+    function nombreCategoria(p){
+      return (p.categoria === 'Otro' && p.categoria_otro) ? p.categoria_otro : p.categoria;
+    }
+    function nombreProveedor(p){
+      return (p.proveedor === 'Otro' && p.proveedor_otro) ? p.proveedor_otro : p.proveedor;
+    }
+
     async function cargarGaleria(){
       galeriaCount.textContent = 'Cargando prendas...';
       galeriaGrid.innerHTML = '';
@@ -1586,7 +1643,7 @@
           </div>
           <div class="card-body">
             <p class="card-nombre">${p.nombre}</p>
-            <p class="card-meta">${p.categoria} · Talla ${p.talla} · Cant. ${cantidad}</p>
+            <p class="card-meta">${nombreCategoria(p)} · Talla ${p.talla} · Cant. ${cantidad}</p>
             <p class="card-precio">${formatoCLP(total)}</p>
             ${cantidad > 1 ? `<p class="card-meta" style="margin-top:-0.4rem;">${formatoCLP(p.precio)} c/u</p>` : ''}
             <button type="button" class="card-btn-ver" data-ver="${p.id}">Ver prenda</button>
@@ -1685,7 +1742,7 @@
 
       document.getElementById('verNombre').textContent = prenda.nombre;
       document.getElementById('verMeta').textContent =
-        `${prenda.categoria} · Talla ${prenda.talla} · Cant. ${cantidad}`;
+        `${nombreCategoria(prenda)} · Talla ${prenda.talla} · Cant. ${cantidad}`;
       document.getElementById('verPrecio').textContent =
         cantidad > 1 ? `${formatoCLP(total)} · ${formatoCLP(prenda.precio)} c/u` : formatoCLP(prenda.precio);
 
@@ -1759,6 +1816,13 @@
 
       document.getElementById('inputNombrePrenda').value = prenda.nombre || '';
       document.getElementById('inputCategoria').value = prenda.categoria || '';
+      document.getElementById('inputCategoriaOtro').value = prenda.categoria_otro || '';
+      actualizarCampoOtro(selectCategoria, campoCategoriaOtro, inputCategoriaOtro);
+
+      document.getElementById('inputProveedor').value = prenda.proveedor || '';
+      document.getElementById('inputProveedorOtro').value = prenda.proveedor_otro || '';
+      actualizarCampoOtro(selectProveedor, campoProveedorOtro, inputProveedorOtro);
+
       document.getElementById('inputTalla').value = prenda.talla || '';
       document.getElementById('inputCantidad').value = prenda.cantidad || 1;
       document.getElementById('inputPrecio').value = prenda.precio || '';
@@ -1946,7 +2010,7 @@
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8.5);
         doc.setTextColor(110, 100, 88);
-        doc.text(`${p.categoria || ''} · Talla ${p.talla || ''}`, x + 4, textY);
+        doc.text(`${nombreCategoria(p) || ''} · Talla ${p.talla || ''}`, x + 4, textY);
 
         textY += 7;
         doc.setFont('helvetica', 'bold');
