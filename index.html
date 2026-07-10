@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" data-build="2026-07-10-02">
+<html lang="es" data-build="2026-07-10-03">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
@@ -814,6 +814,87 @@
   }
   .btn-pdf:hover{ transform: translateY(-2px); }
 
+  /* Dashboard (solo admin) */
+  .dash-resumen{
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-bottom: 1.2rem;
+  }
+  .dash-fila{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background: rgba(255,255,255,0.6);
+    border-radius: 14px;
+    padding: 0.75rem 1rem;
+    box-shadow: 0 8px 18px -12px rgba(51,41,31,0.25);
+  }
+  .dash-fila-nombre{
+    font-family:'Jost', sans-serif;
+    font-weight: 500;
+    font-size: 0.88rem;
+    color: var(--ink);
+  }
+  .dash-fila-cant{
+    font-family:'Jost', sans-serif;
+    font-size: 0.72rem;
+    color: rgba(51,41,31,0.55);
+    margin-top: 0.1rem;
+  }
+  .dash-fila-valor{
+    font-family:'Jost', sans-serif;
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: var(--terracotta);
+    white-space: nowrap;
+  }
+  .dash-total-card{
+    background: linear-gradient(135deg, var(--ink), #4a3c2c);
+    color: var(--cream);
+    border-radius: 16px;
+    padding: 1.2rem 1.3rem;
+    margin-bottom: 1.4rem;
+  }
+  .dash-total-card .dash-total-label{
+    font-family:'Jost', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.75;
+    margin: 0 0 0.3rem;
+  }
+  .dash-total-card .dash-total-valor{
+    font-family:'Fraunces', serif;
+    font-weight: 600;
+    font-size: 1.6rem;
+    margin: 0;
+  }
+  .dash-total-card .dash-total-cant{
+    font-family:'Jost', sans-serif;
+    font-size: 0.78rem;
+    opacity: 0.85;
+    margin-top: 0.3rem;
+  }
+  .btn-excel{
+    width:100%;
+    appearance:none;
+    border:none;
+    cursor:pointer;
+    background: linear-gradient(135deg, #3FA65C, #2E8B4A);
+    color: #fff;
+    font-family:'Jost', sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.03em;
+    padding: 0.95rem 1.2rem;
+    border-radius: 999px;
+    box-shadow: 0 14px 30px -14px rgba(46,139,74,0.5);
+    transition: transform .2s ease, filter .2s ease;
+  }
+  .btn-excel:hover{ transform: translateY(-2px); filter: brightness(1.05); }
+  .btn-excel:disabled{ opacity: 0.6; cursor: default; transform:none; }
+
   /* modal de confirmación (eliminar) */
   .confirm-card .modal-title{ margin-bottom: 0.6rem; }
   .confirm-msg{
@@ -931,6 +1012,7 @@
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
   <div class="update-banner" id="updateBanner">
@@ -999,6 +1081,7 @@
       <button class="btn-coffee" id="btnIngresarPrenda">Ingresar prenda</button>
       <button class="btn-coffee" id="btnRegistrarVenta">Registrar una venta</button>
       <button class="btn-coffee" id="btnGaleria">Galería</button>
+      <button class="btn-coffee" id="btnDashboard" style="display:none;">Dashboard</button>
     </div>
   </div>
 
@@ -1168,6 +1251,22 @@
     </div>
   </div>
 
+  <div class="gallery-screen" id="dashboardScreen">
+    <div class="gallery-wrap">
+      <button class="form-back" id="btnVolverHomeDashboard">← Volver</button>
+      <p class="form-title">Dashboard</p>
+      <p class="date-display" id="dashboardFecha" style="text-align:left; margin:-1rem 0 1.4rem;"></p>
+
+      <p class="gallery-count" id="dashboardEstado">Cargando información...</p>
+
+      <div class="dash-resumen" id="dashResumenLista"></div>
+
+      <div class="dash-total-card" id="dashTotalGeneral"></div>
+
+      <button class="btn-excel" id="btnDescargarExcel">⬇ Descargar Excel</button>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="confirmBackdrop">
     <div class="modal-card confirm-card">
       <p class="modal-title">¿Eliminar esta prenda?</p>
@@ -1253,11 +1352,13 @@
 
     const formPrendaScreen = document.getElementById('formPrendaScreen');
     const galleryScreen = document.getElementById('galleryScreen');
+    const dashboardScreen = document.getElementById('dashboardScreen');
 
     function mostrarPantalla(pantalla){
       homeScreen.classList.remove('show');
       formPrendaScreen.classList.remove('show');
       galleryScreen.classList.remove('show');
+      dashboardScreen.classList.remove('show');
       pantalla.classList.add('show');
     }
 
@@ -1282,6 +1383,13 @@
     document.getElementById('btnGaleria').addEventListener('click', ()=>{
       mostrarPantalla(galleryScreen);
       cargarGaleria();
+    });
+    document.getElementById('btnDashboard').addEventListener('click', ()=>{
+      mostrarPantalla(dashboardScreen);
+      cargarDashboard();
+    });
+    document.getElementById('btnVolverHomeDashboard').addEventListener('click', ()=>{
+      mostrarPantalla(homeScreen);
     });
 
     document.getElementById('btnVolverHome').addEventListener('click', ()=>{
@@ -1489,6 +1597,8 @@
       const saludo = nombre === 'Valeska' ? 'Bienvenida' : 'Bienvenido';
       homeTitle.textContent = `${saludo}, ${nombre} 🌾 ¿Qué deseamos hacer hoy?`;
       document.querySelector('.stage').style.display = 'none';
+      document.getElementById('btnDashboard').style.display =
+        (usuarioActual && usuarioActual.rol === 'admin') ? 'block' : 'none';
       mostrarPantalla(homeScreen);
     }
 
@@ -2104,6 +2214,146 @@
       } catch(err){
         console.error(err);
         showToast('No se pudo generar el PDF. Intenta de nuevo.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = textoOriginal;
+      }
+    });
+
+    // ================= DASHBOARD (solo admin) =================
+    let dashboardPrendasCache = [];
+
+    async function cargarDashboard(){
+      const estadoEl = document.getElementById('dashboardEstado');
+      const listaEl = document.getElementById('dashResumenLista');
+      const totalEl = document.getElementById('dashTotalGeneral');
+      const fechaEl = document.getElementById('dashboardFecha');
+      const btnExcel = document.getElementById('btnDescargarExcel');
+
+      let txt = new Date().toLocaleDateString('es-CL', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+      fechaEl.textContent = txt.charAt(0).toUpperCase() + txt.slice(1);
+
+      estadoEl.textContent = 'Cargando información...';
+      listaEl.innerHTML = '';
+      totalEl.innerHTML = '';
+      btnExcel.disabled = true;
+
+      const { data, error } = await sb.from('prendas').select('*').order('categoria', { ascending: true });
+
+      if(error){
+        console.error(error);
+        estadoEl.textContent = 'No se pudo cargar la información.';
+        return;
+      }
+
+      dashboardPrendasCache = data || [];
+
+      if(dashboardPrendasCache.length === 0){
+        estadoEl.textContent = 'Aún no hay prendas ingresadas.';
+        btnExcel.disabled = false;
+        return;
+      }
+
+      // Agrupar por categoría (usando el nombre real cuando es "Otro")
+      const grupos = {};
+      let cantidadGeneral = 0;
+      let valorGeneral = 0;
+
+      dashboardPrendasCache.forEach(p=>{
+        const nombreCat = nombreCategoria(p) || 'Sin categoría';
+        const cant = p.cantidad || 1;
+        const total = p.total != null ? p.total : (p.precio || 0) * cant;
+
+        if(!grupos[nombreCat]) grupos[nombreCat] = { cantidad: 0, valor: 0 };
+        grupos[nombreCat].cantidad += cant;
+        grupos[nombreCat].valor += total;
+
+        cantidadGeneral += cant;
+        valorGeneral += total;
+      });
+
+      estadoEl.textContent = `Resumen por tipo de prenda (${dashboardPrendasCache.length} registro${dashboardPrendasCache.length === 1 ? '' : 's'})`;
+
+      const nombresOrdenados = Object.keys(grupos).sort((a,b)=> grupos[b].cantidad - grupos[a].cantidad);
+
+      listaEl.innerHTML = nombresOrdenados.map(nombre=>{
+        const g = grupos[nombre];
+        return `
+          <div class="dash-fila">
+            <div>
+              <p class="dash-fila-nombre">${nombre}</p>
+              <p class="dash-fila-cant">${g.cantidad} prenda${g.cantidad === 1 ? '' : 's'}</p>
+            </div>
+            <p class="dash-fila-valor">${formatoCLP(g.valor)}</p>
+          </div>
+        `;
+      }).join('');
+
+      totalEl.innerHTML = `
+        <p class="dash-total-label">Total general</p>
+        <p class="dash-total-valor">${formatoCLP(valorGeneral)}</p>
+        <p class="dash-total-cant">${cantidadGeneral} prenda${cantidadGeneral === 1 ? '' : 's'} en total</p>
+      `;
+
+      btnExcel.disabled = false;
+    }
+
+    document.getElementById('btnDescargarExcel').addEventListener('click', ()=>{
+      if(dashboardPrendasCache.length === 0){
+        showToast('No hay datos para exportar todavía');
+        return;
+      }
+
+      const btn = document.getElementById('btnDescargarExcel');
+      const textoOriginal = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Generando...';
+
+      try{
+        // Hoja 1: detalle completo de cada prenda
+        const filas = dashboardPrendasCache.map(p=>{
+          const cant = p.cantidad || 1;
+          const total = p.total != null ? p.total : (p.precio || 0) * cant;
+          return {
+            'Nombre': p.nombre || '',
+            'Categoría': nombreCategoria(p) || '',
+            'Proveedor': nombreProveedor(p) || '',
+            'Talla': p.talla || '',
+            'Cantidad': cant,
+            'Precio unidad': p.precio || 0,
+            'Total': total,
+            'Fecha ingreso': p.fecha_ingreso || '',
+            'Avance de temporada': p.avance_temporada ? 'Sí' : 'No',
+            'Vendida': p.vendida ? 'Sí' : 'No',
+            'Ingresado por': p.ingresado_por_nombre || '',
+          };
+        });
+
+        // Hoja 2: resumen por categoría
+        const grupos = {};
+        filas.forEach(f=>{
+          const cat = f['Categoría'] || 'Sin categoría';
+          if(!grupos[cat]) grupos[cat] = { cantidad: 0, valor: 0 };
+          grupos[cat].cantidad += f['Cantidad'];
+          grupos[cat].valor += f['Total'];
+        });
+        const filasResumen = Object.keys(grupos).map(cat=>({
+          'Categoría': cat,
+          'Cantidad total': grupos[cat].cantidad,
+          'Valor total (CLP)': grupos[cat].valor,
+        }));
+
+        const wb = XLSX.utils.book_new();
+        const hojaResumen = XLSX.utils.json_to_sheet(filasResumen);
+        const hojaDetalle = XLSX.utils.json_to_sheet(filas);
+        XLSX.utils.book_append_sheet(wb, hojaResumen, 'Resumen');
+        XLSX.utils.book_append_sheet(wb, hojaDetalle, 'Prendas');
+
+        XLSX.writeFile(wb, `valeska-inventario-${fechaHoyISO()}.xlsx`);
+        showToast('Excel descargado 📊');
+      } catch(err){
+        console.error(err);
+        showToast('No se pudo generar el Excel. Intenta de nuevo.');
       } finally {
         btn.disabled = false;
         btn.textContent = textoOriginal;
