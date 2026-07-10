@@ -965,7 +965,7 @@
     <p class="tagline">Prendas con alma, hechas para volar libres</p>
 
     <button class="btn-ingreso" id="btnIngreso">Ingresar</button>
-    <span class="btn-caption">Panel administrador</span>
+    <span class="btn-caption" id="versionApp">v—</span>
     <span class="date-display" id="fechaHoy"></span>
   </div>
 
@@ -1551,9 +1551,13 @@
       const buildActual = document.documentElement.getAttribute('data-build');
       const banner = document.getElementById('updateBanner');
 
+      const elVersion = document.getElementById('versionApp');
+      if(elVersion) elVersion.textContent = `v${buildActual}`;
+
       async function verificarVersion(){
         try{
-          const resp = await fetch(window.location.href.split('?')[0] + '?_=' + Date.now(), { cache: 'no-store' });
+          const url = window.location.href.split('?')[0].split('#')[0];
+          const resp = await fetch(`${url}?_check=${Date.now()}`, { cache: 'no-store' });
           if(!resp.ok) return;
           const html = await resp.text();
           const match = html.match(/data-build="([^"]+)"/);
@@ -1565,7 +1569,8 @@
         }
       }
 
-      // Chequeo inicial (con un pequeño respiro para no competir con la carga)
+      // Chequeo inicial: uno rápido apenas carga y otro un poco después por si acaso
+      verificarVersion();
       setTimeout(verificarVersion, 4000);
 
       // Reintentos periódicos mientras la app sigue abierta
