@@ -2237,13 +2237,9 @@
           doc.setFont('helvetica', 'italic');
           doc.setFontSize(7);
           doc.setTextColor(130, 120, 105);
-          let textoDesc = p.descripcion;
-          const anchoMaxDesc = cardW - 8;
-          while(doc.getTextWidth(textoDesc) > anchoMaxDesc && textoDesc.length > 3){
-            textoDesc = textoDesc.slice(0, -1);
-          }
-          if(textoDesc.length < p.descripcion.length) textoDesc = textoDesc.slice(0, -3) + '...';
-          doc.text(textoDesc, x + 4, textY);
+
+          const lineas = doc.splitTextToSize(p.descripcion, cardW - 8);
+          doc.text(lineas, x + 4, textY);
         }
 
         if(p.vendida){
