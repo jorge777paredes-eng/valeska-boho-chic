@@ -2160,7 +2160,7 @@
 
       dibujarHeader();
 
-      const cardW = 86, cardH = 92, gapX = 8, gapY = 8;
+      const cardW = 86, cardH = 116, gapX = 8, gapY = 8;
       const FOOTER_RESERVA = 22; // espacio reservado abajo para el pie de página (redes + numeración)
       const colX = [marginX, marginX + cardW + gapX];
       let col = 0, y = 82;
@@ -2232,47 +2232,19 @@
         const precioUnitTxt = Number(p.precio || 0).toLocaleString('es-CL', { style:'currency', currency:'CLP', maximumFractionDigits:0 });
         doc.text(precioUnitTxt, x + 4, textY);
 
-if (p.descripcion) {
-
-    textY += 5;
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.setTextColor(130,120,105);
-
-    const anchoMaxDesc = cardW - 8;
-
-    // Espacio disponible para la descripción
-    const altoDisponible = cardH - (textY - y) - 6;
-
-    // Altura de cada línea
-    const altoLinea = 3.8;
-
-    // Máximo de líneas que caben en la tarjeta
-    const maxLineas = Math.floor(altoDisponible / altoLinea);
-
-    let lineas = doc.splitTextToSize(p.descripcion, anchoMaxDesc);
-
-    // Limitar líneas
-    if (lineas.length > maxLineas) {
-
-        lineas = lineas.slice(0, maxLineas);
-
-        while (
-            doc.getTextWidth(lineas[maxLineas - 1] + "...") >
-            anchoMaxDesc
-        ) {
-            lineas[maxLineas - 1] =
-                lineas[maxLineas - 1].slice(0, -1);
+        if(p.descripcion){
+          textY += 5;
+          doc.setFont('helvetica', 'italic');
+          doc.setFontSize(7);
+          doc.setTextColor(130, 120, 105);
+          let textoDesc = p.descripcion;
+          const anchoMaxDesc = cardW - 8;
+          while(doc.getTextWidth(textoDesc) > anchoMaxDesc && textoDesc.length > 3){
+            textoDesc = textoDesc.slice(0, -1);
+          }
+          if(textoDesc.length < p.descripcion.length) textoDesc = textoDesc.slice(0, -3) + '...';
+          doc.text(textoDesc, x + 4, textY);
         }
-
-        lineas[maxLineas - 1] += "...";
-    }
-
-    doc.text(lineas, x + 4, textY);
-
-    textY += lineas.length * altoLinea;
-}
 
         if(p.vendida){
           doc.setFillColor(...INK);
