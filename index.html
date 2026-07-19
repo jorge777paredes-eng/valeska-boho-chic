@@ -2233,18 +2233,45 @@
         doc.text(precioUnitTxt, x + 4, textY);
 
 if (p.descripcion) {
+
     textY += 5;
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
-    doc.setTextColor(130, 120, 105);
+    doc.setTextColor(130,120,105);
 
     const anchoMaxDesc = cardW - 8;
-    const lineas = doc.splitTextToSize(p.descripcion, anchoMaxDesc);
+
+    // Espacio disponible para la descripción
+    const altoDisponible = cardH - (textY - y) - 6;
+
+    // Altura de cada línea
+    const altoLinea = 3.8;
+
+    // Máximo de líneas que caben en la tarjeta
+    const maxLineas = Math.floor(altoDisponible / altoLinea);
+
+    let lineas = doc.splitTextToSize(p.descripcion, anchoMaxDesc);
+
+    // Limitar líneas
+    if (lineas.length > maxLineas) {
+
+        lineas = lineas.slice(0, maxLineas);
+
+        while (
+            doc.getTextWidth(lineas[maxLineas - 1] + "...") >
+            anchoMaxDesc
+        ) {
+            lineas[maxLineas - 1] =
+                lineas[maxLineas - 1].slice(0, -1);
+        }
+
+        lineas[maxLineas - 1] += "...";
+    }
 
     doc.text(lineas, x + 4, textY);
 
-    textY += (lineas.length - 1) * 3.8;
+    textY += lineas.length * altoLinea;
 }
 
         if(p.vendida){
