@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" data-build="2026-07-10-07">
+<html lang="es" data-build="2026-07-10-08">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
@@ -464,7 +464,8 @@
   }
 
   .photo-row{
-    display:flex;
+    display:grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 0.7rem;
     margin: 0 0 1.5rem;
   }
@@ -1137,7 +1138,7 @@
           <input type="date" id="inputFecha" required>
         </div>
         <div class="field">
-          <label>Fotos (hasta 3)</label>
+          <label>Fotos (hasta 4)</label>
           <div class="photo-row">
             <div class="photo-slot" data-index="0">
               <span class="photo-icon">📷</span>
@@ -1150,6 +1151,10 @@
             <div class="photo-slot" data-index="2">
               <span class="photo-icon">📷</span>
               <span class="photo-label">Foto 3</span>
+            </div>
+            <div class="photo-slot" data-index="3">
+              <span class="photo-icon">📷</span>
+              <span class="photo-label">Foto 4</span>
             </div>
           </div>
           <input type="file" id="inputFoto" accept="image/*" style="display:none">
@@ -1379,11 +1384,23 @@
       return v.replace(/[.\-\s]/g, '').trim().toUpperCase();
     }
 
+    function formatearRut(valor){
+      let limpio = valor.replace(/[^0-9kK]/g, '').toUpperCase().slice(0, 9);
+      if(limpio.length === 0) return '';
+      const cuerpo = limpio.slice(0, -1).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      const dv = limpio.slice(-1);
+      return cuerpo ? `${cuerpo}-${dv}` : dv;
+    }
+
     const modal = document.getElementById('modalBackdrop');
     const inputRut = document.getElementById('inputRut');
     const inputPass = document.getElementById('inputPass');
     const homeScreen = document.getElementById('homeScreen');
     const homeTitle = document.getElementById('homeTitle');
+
+    inputRut.addEventListener('input', ()=>{
+      inputRut.value = formatearRut(inputRut.value);
+    });
 
     function abrirModal(){
       modal.classList.add('show');
@@ -1458,7 +1475,7 @@
     // --- Fotos de la prenda (hasta 3) ---
     const inputFoto = document.getElementById('inputFoto');
     const photoSlots = document.querySelectorAll('.photo-slot');
-    const fotosPrenda = [null, null, null]; // cada una: { file, preview } o null
+    const fotosPrenda = [null, null, null, null]; // cada una: { file, preview } o null
     let slotActivo = null;
 
     function renderSlot(slot, index){
@@ -1566,7 +1583,7 @@
       actualizarTotal();
       actualizarCampoOtro(selectCategoria, campoCategoriaOtro, inputCategoriaOtro);
       actualizarCampoOtro(selectProveedor, campoProveedorOtro, inputProveedorOtro);
-      for(let i=0; i<3; i++){
+      for(let i=0; i<4; i++){
         fotosPrenda[i] = null;
         renderSlot(photoSlots[i], i);
       }
@@ -1610,10 +1627,11 @@
         const slugBase = (document.getElementById('inputNombrePrenda').value || 'prenda')
           .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
-        const [foto1_url, foto2_url, foto3_url] = await Promise.all([
+        const [foto1_url, foto2_url, foto3_url, foto4_url] = await Promise.all([
           resolverUrlFoto(fotosPrenda[0], slugBase || 'prenda-1'),
           resolverUrlFoto(fotosPrenda[1], slugBase || 'prenda-2'),
           resolverUrlFoto(fotosPrenda[2], slugBase || 'prenda-3'),
+          resolverUrlFoto(fotosPrenda[3], slugBase || 'prenda-4'),
         ]);
 
         const cantidad = Number(document.getElementById('inputCantidad').value) || 1;
@@ -1634,7 +1652,7 @@
           total: precioUnidad * cantidad,
           fecha_ingreso: document.getElementById('inputFecha').value,
           avance_temporada: document.getElementById('inputAvanceTemporada').checked,
-          foto1_url, foto2_url, foto3_url,
+          foto1_url, foto2_url, foto3_url, foto4_url,
         };
 
         let error;
@@ -1826,7 +1844,7 @@
     }
 
     function renderCardHTML(p){
-      const foto = p.foto1_url || p.foto2_url || p.foto3_url;
+      const foto = p.foto1_url || p.foto2_url || p.foto3_url || p.foto4_url;
       const cantidad = p.cantidad || 1;
       const total = p.total != null ? p.total : (p.precio || 0) * cantidad;
       return `
@@ -1937,7 +1955,7 @@
     }
 
     function abrirVerPrenda(prenda){
-      verFotos = [prenda.foto1_url, prenda.foto2_url, prenda.foto3_url].filter(Boolean);
+      verFotos = [prenda.foto1_url, prenda.foto2_url, prenda.foto3_url, prenda.foto4_url].filter(Boolean);
       verFotoIndex = 0;
       actualizarVerFoto();
 
@@ -1997,7 +2015,7 @@
 
         // borrar fotos del storage (best effort, no bloquea si falla)
         if(prenda){
-          const rutas = [prenda.foto1_url, prenda.foto2_url, prenda.foto3_url]
+          const rutas = [prenda.foto1_url, prenda.foto2_url, prenda.foto3_url, prenda.foto4_url]
             .filter(Boolean)
             .map(url => url.split('/fotos-prendas/')[1])
             .filter(Boolean);
@@ -2043,7 +2061,7 @@
       document.getElementById('inputAvanceTemporada').checked = !!prenda.avance_temporada;
       actualizarTotal();
 
-      const urls = [prenda.foto1_url, prenda.foto2_url, prenda.foto3_url];
+      const urls = [prenda.foto1_url, prenda.foto2_url, prenda.foto3_url, prenda.foto4_url];
       urls.forEach((url, i)=>{
         fotosPrenda[i] = url ? { file: null, preview: url, existingUrl: url } : null;
         renderSlot(photoSlots[i], i);
@@ -2193,7 +2211,7 @@
         doc.setDrawColor(225, 218, 206);
         doc.roundedRect(x, y, cardW, cardH, 3, 3, 'FD');
 
-        const fotosDisponibles = [p.foto1_url, p.foto2_url, p.foto3_url].filter(Boolean);
+        const fotosDisponibles = [p.foto1_url, p.foto2_url, p.foto3_url, p.foto4_url].filter(Boolean);
         const fotoAltoMM = 58;
         const anchoUtil = cardW - 6;
         const gapFoto = 1.5;
